@@ -42,9 +42,9 @@ app.add_middleware(
 async def root():
     return {
         "Name": "SUI",
-        "Version": "1.1",
+        "Version": "1.2",
         "Description": "Scratch Username Index API",
-        "Documentation": "Coming soon...",
+        "Documentation": "https://github.com/Sid72020123/SUI-API#readme",
         "Credits": "Made by @Sid72020123 on Scratch",
         "DataCredits": "Scratch API and Scratch DB"
     }
