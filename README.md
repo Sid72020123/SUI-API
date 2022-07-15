@@ -33,6 +33,7 @@ Example: https://sui.sid72020123.repl.co/get_user/1882674
 
 ### All Data
 The all data endpoint is removed because the people may spam it and make the server unresponsive.
+You can still download the data from ```data``` folder in this repository!
 
 ### Note for Scratch Team
 If the SUI API is spamming the Scratch API then I will discontinue running it or reduce the number of requests made. Currently, it makes 1 request per 1 second.
