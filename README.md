@@ -1,4 +1,4 @@
-# SUI - The Scratch Username Index API
+# SUI v1.2 - The Scratch Username Index API
 
 Simple Indexer API for Scratch Usernames! This API can be used to find usernames from their IDs.
 
