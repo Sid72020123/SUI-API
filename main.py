@@ -15,10 +15,14 @@ try:
 except ModuleNotFoundError:
     os.system('pip install fastapi')
     os.system('pip install uvicorn')
-    os.system("pip install pymongo")
+    #os.system("pip install pymongo")
     os.system("pip install pymongo[srv]")
     os.system("pip install pyEventLogger")
     import pymongo
+    import uvicorn
+    from fastapi import FastAPI
+    from fastapi.middleware.cors import CORSMiddleware
+    import pyEventLogger
 from SUI import SUI
 # CORS
 
@@ -42,7 +46,7 @@ app.add_middleware(
 async def root():
     return {
         "Name": "SUI",
-        "Version": "1.2",
+        "Version": "1.3",
         "Description": "Scratch Username Index API",
         "Documentation": "https://github.com/Sid72020123/SUI-API#readme",
         "Credits": "Made by @Sid72020123 on Scratch",
@@ -105,6 +109,16 @@ async def id(user):
     except:
         data = {"Error": True, "Info": "An error occurred"}
 
+    return data
+
+
+@app.get("/random/")
+async def random():
+    try:
+        random_data = list(sui.collection.aggregate([{"$sample": {"size": 1}}]))
+        data = {"Error": False, "RandomData": random_data}
+    except:
+        data = {"Error": True, "Info": "An error occurred"}
     return data
 
 
