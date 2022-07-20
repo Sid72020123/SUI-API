@@ -1,4 +1,4 @@
-# SUI v1.2 - The Scratch Username Index API
+# SUI v1.3 - The Scratch Username Index API
 
 Simple Indexer API for Scratch Usernames! This API can be used to find usernames from their IDs.
 
@@ -32,6 +32,10 @@ Example: https://sui.sid72020123.repl.co/get_id/griffpatch
 URL: ```GET https://sui.sid72020123.repl.co/get_user/:id```
 
 Example: https://sui.sid72020123.repl.co/get_user/1882674
+
+### Get Random Data
+Get the random indexed data
+URL: ```https://sui.sid72020123.repl.co/random/```
 
 ### All Data
 The all data endpoint is removed because the people may spam it and make the server unresponsive.
