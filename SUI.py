@@ -18,7 +18,7 @@ logger = pyLogger(colored_output=True,
 
 headers = {'user-agent': 'SUI API'}
 ScracthDB = "https://scratchdb.lefty.one/v3/user/rank/global/followers"
-ScratchAPI = "https://api.allorigins.win/raw?url=https://api.scratch.mit.edu/"
+ScratchAPI = "https://api.scratch.mit.edu/"
 
 password = os.environ['password']
 
