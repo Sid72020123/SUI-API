@@ -31,8 +31,9 @@ class SUI:
         )
         self.db = self.client['SUI']
         self.collection = self.db['data']
-        data = list(self.collection.find())
-        length = len(data)
+        #data = list(self.collection.find())
+        #length = len(data)
+        length = self.collection.count_documents({})
         open('count.json', 'w').write(json.dumps({'Count': length}))
         #open('all_data.json', 'w').write(json.dumps(data, indent=4))
         logger.success(message="Connected External Server!")
