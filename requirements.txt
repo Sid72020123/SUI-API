@@ -1,6 +1,6 @@
 requests
 pymongo[srv]
 dnspython
-uvicorn
+gunicorn
 fastapi
 pyEventLogger
