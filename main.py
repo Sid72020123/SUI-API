@@ -1,7 +1,7 @@
 """
 Made by @Sid72020123
 """
-#exit() # Stopped due to Scratch API Spam
+
 import os
 import json
 from threading import Thread
@@ -13,11 +13,7 @@ try:
     from fastapi.middleware.cors import CORSMiddleware
     import pyEventLogger
 except ModuleNotFoundError:
-    os.system('pip install fastapi')
-    os.system('pip install uvicorn')
-    #os.system("pip install pymongo")
-    os.system("pip install pymongo[srv]")
-    os.system("pip install pyEventLogger")
+    os.system('pip install -r requirements.txt')
     import pymongo
     import uvicorn
     from fastapi import FastAPI
@@ -120,6 +116,3 @@ async def random():
     except:
         data = {"Error": True, "Info": "An error occurred"}
     return data
-
-
-uvicorn.run(app, host='0.0.0.0', port=8080)
