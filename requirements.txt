@@ -4,3 +4,4 @@ dnspython
 uvicorn
 fastapi
 pyEventLogger
+websockets
