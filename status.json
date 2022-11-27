@@ -1,1 +1,11 @@
-{"Continue": false, "Username": "", "Offset": 0}
+{
+    "Username": {
+        "Continue": false,
+        "Username": "",
+        "Offset": 0
+    },
+    "Project": {
+        "Continue": false,
+        "ID": 0
+    }
+}
