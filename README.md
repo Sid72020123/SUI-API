@@ -1,12 +1,14 @@
-# SUI v1.3 - The Scratch Username Index API
+# SUI v2.0- The Scratch Username Index API
 
 Simple Indexer API for Scratch Usernames! This API can be used to find usernames from their IDs.
 
-## Currently, SUI has indexed 1.4M+ (1.4 Million) users!
+## Currently, SUI has indexed 1.5M+ (1.5 Million) users!
 
 ![https://sui.sid72020123.repl.co/status/](https://img.shields.io/badge/dynamic/json?color=blue&label=Total%20Users%20Indexed&query=%24.TotalUsers&url=https%3A%2F%2Fsui.sid72020123.repl.co%2Fstatus%2F)
 
 ## Documentation
+
+Interactive documentation can be found at: https://sui.sid72020123.repl.co/docs
 
 ### Root
 
@@ -42,6 +44,6 @@ The all data endpoint is removed because the people may spam it and make the ser
 You can still download the data from ```data``` folder in this repository!
 
 ### Note for Scratch Team
-If the SUI API is spamming the Scratch API then I will discontinue running it or reduce the number of requests made. Currently, it makes 1 request per 1 second.
+If the SUI API is spamming the Scratch API then I will discontinue running it or reduce the number of requests made. Currently, it makes 2-3 requests per 1 second.
 
 ### Thank You!
