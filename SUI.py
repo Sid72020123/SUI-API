@@ -1,4 +1,4 @@
-"""
+""""
 Made by @Sid72020123
 """
 
@@ -11,7 +11,8 @@ import requests
 import pymongo
 from pyEventLogger import pyLogger
 
-WAIT_TIME = 1
+WAIT_TIME = 0.3
+SCRATCH_PROJECTS = 750000000
 
 # ----- Make the logger object and format the log -----
 logger = pyLogger(colored_output=True,
@@ -47,6 +48,7 @@ class SUI:
     def __init__(self, type):
         self.type = type
         self.proxies = [
+            f"https://q4iafz.deta.dev/api/{ScratchAPI}",
             f"https://proxy-k90c.onrender.com/api/{ScratchAPI}",
             f"https://api.allorigins.win/raw?url={ScratchAPI}"
         ]  # List of all the proxies which the API can use
@@ -65,9 +67,10 @@ class SUI:
             os.system("python main.py")
         self.db = self.client['SUI']
         self.collection = self.db['data']
-        length = self.collection.count_documents({})
-        with open('count.json', 'w') as file:
-            file.write(json.dumps({'Count': length}))
+        if self.type != "Project":
+            length = self.collection.count_documents({})
+            with open('count.json', 'w') as file:
+                file.write(json.dumps({'Count': length}))
         logger.success(message="Connected External Server!",
                        indexer_type=self.type.upper())
 
@@ -230,13 +233,15 @@ class SUI:
                                 username=project_author)
                             self.add_data(followers_d)
                             self.add_data(following_d)
+                            fails = 0
                         except KeyError:
                             fails += 1
-                        if fails >= 500:
-                            project_id -= 500
+                        if fails >= 1000 and project_id > SCRATCH_PROJECTS:
+                            project_id -= 1000
+                            fails = 0
                             logger.info(
                                 message=
-                                f"Starting from project id: {project_id} as there were 500 fails (because those projects were unshared)",
+                                f"Starting from project id: {project_id} as there were 1000 fails (because those projects were unshared)",
                                 indexer_type=self.type.upper())
                         logger.info(message=f"Project ID: {project_id} done",
                                     indexer_type=self.type.upper())
