@@ -1,5 +1,5 @@
 """
-Made by @Sid72020123
+Made by @Sid72020123 on Scratch
 """
 
 # ----- Importing libraries and setup -----
@@ -7,18 +7,18 @@ import os
 import time
 import json
 import requests
-
 import pymongo
 from pyEventLogger import pyLogger
 
-WAIT_TIME = 0.3
+WAIT_TIME = 0.5
 SCRATCH_PROJECTS = 750000000
+SCRATCH_STUDIOS = 32500000
 
 # ----- Make the logger object and format the log -----
 logger = pyLogger(colored_output=True,
                   make_file=True,
                   file_name='info',
-                  rewrite_file=False)
+                  rewrite_file=False, file_logs=["SUCCESS", "ERROR"])
 
 # Info Log:
 format_string = "[indexer_type] [time] [log_type] [message]"
@@ -37,7 +37,7 @@ error_format_color = "[bold cyan black][bold #FF0000 black][bold red black][bold
 logger.format_log_color(log_type="ERROR", format_string=error_format_color)
 
 # ----- Headers and URLs -----
-headers = {'user-agent': 'SUI API v2.0'}
+headers = {'User-Agent': 'SUI API v2.5'}
 ScracthDB = "https://scratchdb.lefty.one/v3/user/rank/global/followers"
 ScratchAPI = "https://api.scratch.mit.edu/"
 
@@ -47,15 +47,12 @@ password = os.environ["password"]
 class SUI:
     def __init__(self, type):
         self.type = type
-        self.proxies = [
-            f"https://q4iafz.deta.dev/api/{ScratchAPI}",
-            f"https://proxy-k90c.onrender.com/api/{ScratchAPI}",
-            f"https://api.allorigins.win/raw?url={ScratchAPI}"
-        ]  # List of all the proxies which the API can use
+        self.proxies = [f"https://xnw7rh.deta.dev/get/{ScratchAPI}",            f"https://api.allorigins.win/raw?url={ScratchAPI}"
+                        ]  # List of all the proxies which the API can use
         self.ScratchAPI = self.proxies[
             0]  # Get the current URL along with the proxy URL
         self.use_proxy = 0  # Current proxy index
-        self.run = {"Username": True, "Project": True}
+        self.run = {"Username": True, "Project": True, "Studio":  True}
         try:
             self.client = pymongo.MongoClient(
                 f"mongodb+srv://SUI:{password}@sui.3k3k5.mongodb.net/?retryWrites=true&w=majority"
@@ -87,8 +84,7 @@ class SUI:
                 indexer_type=self.type.upper())
             data = ["griffpatch", "Will_Wam", "griffpatch_tutor"]
             logger.info(
-                message=
-                "Continuing with some famous users as there was an error...",
+                message="Continuing with some famous users as there was an error...",
                 indexer_type=self.type.upper())
             return data
 
@@ -99,8 +95,7 @@ class SUI:
 
     def get_user_followers(self, username, limit="40", offset=0):
         data = requests.get(
-            url=
-            f"{self.ScratchAPI}users/{username}/followers/?limit={limit}&offset={offset}",
+            url=f"{self.ScratchAPI}users/{username}/followers/?limit={limit}&offset={offset}",
             headers=headers).json()
         followers = {}
         try:
@@ -112,8 +107,7 @@ class SUI:
 
     def get_user_following(self, username, limit="40", offset=0):
         data = requests.get(
-            url=
-            f"{self.ScratchAPI}users/{username}/following/?limit={limit}&offset={offset}",
+            url=f"{self.ScratchAPI}users/{username}/following/?limit={limit}&offset={offset}",
             headers=headers).json()
         following = {}
         for i in data:
@@ -159,15 +153,13 @@ class SUI:
                     index = famous_users.index(
                         done['Username'])  # Continue from the index
                     logger.info(
-                        message=
-                        f"Continuing from index: {index} and offset: {offset}",
+                        message=f"Continuing from index: {index} and offset: {offset}",
                         indexer_type=self.type.upper())
                 else:
                     offset = 0  # Offset
                     index = 0  # Index
                     logger.info(
-                        message=
-                        f"Starting from index: {index} and offset: {offset}",
+                        message=f"Starting from index: {index} and offset: {offset}",
                         indexer_type=self.type.upper())
                 while index < len(
                         famous_users
@@ -186,8 +178,7 @@ class SUI:
                         self.use_proxy = p
                         self.ScratchAPI = self.proxies[self.use_proxy]
                         logger.info(
-                            message=
-                            f"Current proxy failed! Using proxy index: {self.use_proxy}",
+                            message=f"Current proxy failed! Using proxy index: {self.use_proxy}",
                             indexer_type=self.type.upper(),
                             include_error_message=True)
                         continue
@@ -240,8 +231,7 @@ class SUI:
                             project_id -= 1000
                             fails = 0
                             logger.info(
-                                message=
-                                f"Starting from project id: {project_id} as there were 1000 fails (because those projects were unshared)",
+                                message=f"Starting from project id: {project_id} as there were 1000 fails (because those projects were unshared)",
                                 indexer_type=self.type.upper())
                         logger.info(message=f"Project ID: {project_id} done",
                                     indexer_type=self.type.upper())
@@ -256,8 +246,88 @@ class SUI:
                         self.use_proxy = p
                         self.ScratchAPI = self.proxies[self.use_proxy]
                         logger.info(
-                            message=
-                            f"Current proxy failed! Using proxy index: {self.use_proxy}",
+                            message=f"Current proxy failed! Using proxy index: {self.use_proxy}",
+                            indexer_type=self.type.upper())
+                        continue
+                    time.sleep(
+                        WAIT_TIME)  # Sleep to reduce the load on Servers
+        except:
+            logger.error(message="An Error Occurred!",
+                         include_error_message=True,
+                         indexer_type=self.type.upper())
+
+    def _start_loop_studio(self):
+        run = self.run["Studio"]
+        try:
+            while run:
+                fails = 0  # Count the number of unshared studios
+                with open('status.json') as file:
+                    done = json.load(file)["Studio"]
+                if done['Continue']:  # If the script breaks in between and has to continue
+                    studio_id = done['ID']  # Studio ID
+                    logger.info(
+                        message=f"Continuing from studio id: {studio_id}",
+                        indexer_type=self.type.upper())
+                else:
+                    studio_id = 1  # Studio ID
+                    logger.info(
+                        message=f"Starting from studio id: {studio_id}",
+                        indexer_type=self.type.upper())
+                # ----- Main script to collect the user's data by checking every studio -----
+                while True:
+                    try:
+                        data = requests.get(
+                            f"{self.ScratchAPI}/studios/{studio_id}/managers").json()
+                        if type(data) != dict:
+                            try:
+                                studio_managers = {}
+                                for d in data:
+                                    studio_managers[str(d["id"])] = d["username"]
+                                    followers_d = self.get_user_followers(
+                                        username=d["username"])
+                                    following_d = self.get_user_following(
+                                        username=d["username"])
+                                    self.add_data(followers_d)
+                                    self.add_data(following_d)
+                                self.add_data(studio_managers)
+                                studio_curators = {}
+                                try:
+                                    data = requests.get(
+                                        f"{self.ScratchAPI}/studios/{studio_id}/curators").json()
+                                    for d in data:
+                                        studio_curators[str(d["id"])] = d["username"]
+                                        followers_d = self.get_user_followers(
+                                            username=d["username"])
+                                        following_d = self.get_user_following(
+                                            username=d["username"])
+                                        self.add_data(followers_d)
+                                        self.add_data(following_d)
+                                    self.add_data(studio_curators)
+                                except KeyError:
+                                    pass
+                                fails = 0
+                            except KeyError:
+                                fails += 1
+                        if fails >= 1000 and studio_id > SCRATCH_STUDIOS:
+                            studio_id -= 1000
+                            fails = 0
+                            logger.info(
+                                message=f"Starting from studio id: {studio_id} as there were 1000 fails (because those studios doesn't exist)",
+                                indexer_type=self.type.upper())
+                        logger.info(message=f"Studio ID: {studio_id} done",
+                                    indexer_type=self.type.upper())
+                        studio_id += 1  # Increase Index by 1
+                        self.update_status(i=studio_id,
+                                           c=True)  # Update the status
+                    # ----- Change the Proxy if one of those gives an error -----
+                    except ValueError:
+                        p = self.use_proxy + 1
+                        if p > len(self.proxies) - 1:
+                            p = 0
+                        self.use_proxy = p
+                        self.ScratchAPI = self.proxies[self.use_proxy]
+                        logger.info(
+                            message=f"Current proxy failed! Using proxy index: {self.use_proxy}",
                             indexer_type=self.type.upper())
                         continue
                     time.sleep(
@@ -271,9 +341,12 @@ class SUI:
         if self.type == "Username":
             self._start_loop_username()
             self.run["Username"] = True
-        else:
+        elif self.type == "Project":
             self._start_loop_project()
             self.run["Project"] = True
+        else:
+            self._start_loop_studio()
+            self.run["Studio"] = True
 
     def add_data(self, d):
         # ----- Add the data to the DB -----
@@ -301,7 +374,10 @@ class SUI:
                 data["Username"]["Continue"] = c
                 data["Username"]["Username"] = i
                 data["Username"]["Offset"] = offset
-            else:
+            elif self.type == "Project":
                 data["Project"]["Continue"] = c
                 data["Project"]["ID"] = i
+            else:
+                data["Studio"]["Continue"] = c
+                data["Studio"]["ID"] = i
             file.write(json.dumps(data))
