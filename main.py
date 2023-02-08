@@ -1,10 +1,12 @@
 """
-Made by @Sid72020123
+Made by @Sid72020123 on Scratch
 """
 
-import os
-import json
+from SUI import SUI
 from threading import Thread
+import json
+import time
+import os
 
 # ----- Imports -----
 try:
@@ -20,7 +22,6 @@ except ModuleNotFoundError:
     from fastapi import FastAPI, WebSocket
     from fastapi.middleware.cors import CORSMiddleware
     import pyEventLogger
-from SUI import SUI
 
 # CORS
 origins = ["*"]
@@ -28,11 +29,14 @@ origins = ["*"]
 # ----- Main Indexing Threads -----
 username_indexer = SUI("Username")
 project_indexer = SUI("Project")
+studio_indexer = SUI("Studio")
 sui = username_indexer
 thread1 = Thread(target=username_indexer.start_loop, args=())
 thread2 = Thread(target=project_indexer.start_loop, args=())
+thread3 = Thread(target=studio_indexer.start_loop, args=())
 thread1.start()
 thread2.start()
+thread3.start()
 
 # ----- The API -----
 tags_metadata = [
@@ -50,13 +54,16 @@ tags_metadata = [
     },
 ]
 
-app = FastAPI(docs_url="/docs", redoc_url=None,
-              title="SUI - Scratch Username Index API",
-              description="Scratch Username Index API which indexes the users (only the username and the id) on the Scratch website and stores them in a database! "
-                          "You can find the username from their id using this API!\n\n This API was made because the Scratch API didn't had any endpoint to get username from their id.\n\n\n"
-                          "**Note: You may not be able to find all the usernames from their IDs because this API hasn't indexed much users on Scratch! But it has indexed over 1M+ users!**",
-              version="2.0", openapi_tags=tags_metadata
-              )
+app = FastAPI(
+    docs_url="/docs",
+    redoc_url=None,
+    title="SUI - Scratch Username Index API",
+    description=
+    "Scratch Username Index API which indexes the users (only the username and the id) on the Scratch website and stores them in a database! "
+    "You can find the username from their id using this API!\n\n This API was made because the Scratch API didn't had any endpoint to get username from their id.\n\n\n"
+    "**Note: You may not be able to find all the usernames from their IDs because this API hasn't indexed much users on Scratch! But it has indexed over 2M+ users!**",
+    version="2.5",
+    openapi_tags=tags_metadata)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -73,9 +80,10 @@ async def root() -> dict:
     """
     return {
         "Name": "SUI",
-        "Version": "2.0",
+        "Version": "2.5",
         "Description": "Scratch Username Index API",
-        "Documentation": "https://github.com/Sid72020123/SUI-API#readme or /docs",
+        "Documentation":
+        "https://github.com/Sid72020123/SUI-API#readme or /docs",
         "Credits": "Made by @Sid72020123 on Scratch",
         "DataCredits": "Scratch API and Scratch DB"
     }
@@ -86,15 +94,26 @@ async def get_status():
         total_data = json.loads(open('count.json', 'r').read())['Count']
         working_at = json.loads(open('status.json', 'r').read())
         data = {
-            "Error": False,
-            "ServerStatus": "Online",
-            "TotalUsers": total_data,
-            "Indexers": [
-                {"Username": working_at["Username"], "ProgramRunning": username_indexer.run["Username"],
-                 "ProxyIndex": username_indexer.use_proxy},
-                {"Project": working_at["Project"], "ProgramRunning": project_indexer.run["Project"],
-                 "ProxyIndex": project_indexer.use_proxy}
-            ]
+            "Error":
+            False,
+            "ServerStatus":
+            "Online",
+            "TotalUsers":
+            total_data,
+            "Indexers": [{
+                "Username": working_at["Username"],
+                "ProgramRunning": username_indexer.run["Username"],
+                "ProxyIndex": username_indexer.use_proxy
+            }, {
+                "Project": working_at["Project"],
+                "ProgramRunning": project_indexer.run["Project"],
+                "ProxyIndex": project_indexer.use_proxy
+            }, {
+              "Studio": working_at["Studio"]
+              ,
+                "ProgramRunning": studio_indexer.run["Studio"],
+                "ProxyIndex": studio_indexer.use_proxy
+            }]
         }
     except:
         data = {"Error": True, "Info": "An error occurred"}
@@ -172,6 +191,21 @@ async def random() -> dict:
     return data
 
 
+@app.get("/get_data/", tags=["Main"])
+async def gd(limit: int = 1000, offset: int = 0) -> dict:
+    """
+    Get Data with the stated limit and skip from the given offset
+    """
+    if limit > 10000:
+        return {"Error": True, "Message": "Limit can't be greater than 10K!"}
+    try:
+        d = list(sui.collection.find({}).skip(offset).limit(limit))
+        data = {"Error": False, "Data": d}
+    except:
+        data = {"Error": True, "Info": "An error occurred"}
+    return data
+
+
 # ----- Websocket for Live Data! -----
 # (Sorry if the code is wrong/odd. I am new to asynchio)
 @app.websocket("/live-data")
@@ -179,19 +213,14 @@ async def live_data(websocket: WebSocket):
     await websocket.accept()
     while True:
         try:
-            raw_data = await websocket.receive_text()
-            data = json.loads(raw_data)
-            if data["GET"] == "LIVE":
-                status_data = await get_status()
-                await websocket.send_text(json.dumps(status_data))
-            else:
-                await websocket.send_text(json.dumps({"Message": "Access Denied!"}))
-                await websocket.close()
-                break
+            status_data = await get_status()
+            await websocket.send_text(json.dumps(status_data))
         except (KeyError, ValueError):
-            await websocket.send_text(json.dumps({"Error": "An error occurred!"}))
+            await websocket.send_text(
+                json.dumps({"Error": "An error occurred!"}))
             await websocket.close()
             break
+        time.sleep(0.1)
 
 
 uvicorn.run(app, host='0.0.0.0', port=8080)
