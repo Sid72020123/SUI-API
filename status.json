@@ -7,5 +7,9 @@
     "Project": {
         "Continue": false,
         "ID": 0
+    },
+    "Studio": {
+        "Continue": false,
+        "ID": 0
     }
 }
