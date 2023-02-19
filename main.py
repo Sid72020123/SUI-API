@@ -2,7 +2,7 @@
 Made by @Sid72020123 on Scratch
 """
 
-from SUI import SUI
+
 from threading import Thread
 import json
 import time
@@ -22,6 +22,8 @@ except ModuleNotFoundError:
     from fastapi import FastAPI, WebSocket
     from fastapi.middleware.cors import CORSMiddleware
     import pyEventLogger
+
+from SUI import SUI
 
 # CORS
 origins = ["*"]
@@ -62,7 +64,7 @@ app = FastAPI(
     "Scratch Username Index API which indexes the users (only the username and the id) on the Scratch website and stores them in a database! "
     "You can find the username from their id using this API!\n\n This API was made because the Scratch API didn't had any endpoint to get username from their id.\n\n\n"
     "**Note: You may not be able to find all the usernames from their IDs because this API hasn't indexed much users on Scratch! But it has indexed over 2M+ users!**",
-    version="2.5",
+    version="2.6",
     openapi_tags=tags_metadata)
 app.add_middleware(
     CORSMiddleware,
@@ -80,7 +82,7 @@ async def root() -> dict:
     """
     return {
         "Name": "SUI",
-        "Version": "2.5",
+        "Version": "2.6",
         "Description": "Scratch Username Index API",
         "Documentation":
         "https://github.com/Sid72020123/SUI-API#readme or /docs",
@@ -151,8 +153,10 @@ async def id(user: str) -> dict:
     Get ID from the username
     """
     try:
-        id = sui.collection.find_one({"Username": user})["_id"]
-        data = {"Error": False, "ID": id, "Username": user}
+        search = sui.collection.find_one({"Username": { "$regex": f"^{user}$", "$options" : 'i'}})
+        id = search["_id"]
+        u = search["Username"]
+        data = {"Error": False, "ID": id, "Username": u}
     except TypeError:
         data = {
             "Error": True,
