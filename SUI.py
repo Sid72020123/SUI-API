@@ -64,7 +64,7 @@ class SUI:
             os.system("python main.py")
         self.db = self.client['SUI']
         self.collection = self.db['data']
-        if self.type != "Project":
+        if self.type == "Username":
             length = self.collection.count_documents({})
             with open('count.json', 'w') as file:
                 file.write(json.dumps({'Count': length}))
