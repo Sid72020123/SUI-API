@@ -1,0 +1,15 @@
+v: 0
+micros:
+  - name: main
+    src: /main
+    engine: python3.9
+    primary: true
+    public: true
+    presets:
+      env:
+        - name: API_KEY
+          description: The API Key of MongoDB
+          default: "123"
+        - name: APP_ID
+          description: The App ID of MongoDB
+          default: "123"
