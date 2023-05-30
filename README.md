@@ -1,3 +1,5 @@
+# This repo has been moved to https://github.com/Sid72020123/Super-SUI-API (wait for some days for it to become public!)
+
 # SUI v2.6 - The Scratch Username Index API
 
 Simple Indexer API for Scratch Usernames! This API can be used to find usernames from their IDs.
