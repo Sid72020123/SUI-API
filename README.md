@@ -1,4 +1,4 @@
-# This repo has been moved to https://github.com/Sid72020123/Super-SUI-API (wait for some days for it to become public!)
+# NEW VERSION STILL WIP... (VERY SLOW DEVELOPMENT)
 
 # SUI v2.6 - The Scratch Username Index API
 
@@ -6,7 +6,7 @@ Simple Indexer API for Scratch Usernames! This API can be used to find usernames
 
 ## Currently, SUI has indexed 3.0M+ (3.0 Million) users!
 
-![https://sui.sid72020123.repl.co/status/](https://img.shields.io/badge/dynamic/json?color=blue&label=Total%20Users%20Indexed&query=%24.TotalUsers&url=https%3A%2F%2Fsui.sid72020123.repl.co%2Fstatus%2F)
+![https://sui.sid72020123.repl.co/status/](https://img.shields.io/badge/dynamic/json?color=blue&label=Total%20Users%20Indexed&query=%24.TotalUsersData.Count&url=https%3A%2F%2Fsui.scratchconnect.eu.org%2Fstatus%2F)
 
 ## Documentation
 
