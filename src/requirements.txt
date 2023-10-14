@@ -1,0 +1,9 @@
+python-dotenv
+requests
+pymongo[srv]
+dnspython
+pyEventLogger
+beautifulsoup4
+pytz
+arrow
+matplotlib

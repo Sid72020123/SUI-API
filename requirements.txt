@@ -1,7 +1,0 @@
-requests
-pymongo[srv]
-dnspython
-uvicorn
-fastapi
-pyEventLogger
-websockets
