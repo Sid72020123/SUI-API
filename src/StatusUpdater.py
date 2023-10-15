@@ -99,7 +99,7 @@ def calculate_growth(ndate, nd):
         return [True, upserts_growth, count_growth]
     except Exception as E:
         print("DAILY GROWTH:", E)
-        return [False]
+        return [False, 0, 0]
 
 
 def updates_thread():
