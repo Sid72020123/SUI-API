@@ -83,7 +83,7 @@ def create_status_history(date, data):
 
 def calculate_growth(ndate, nd):
     new_date = ndate
-    old_date = new_date.shift(days=-1).strftime("%d/%m/%Y")
+    old_date = new_date.shift(days=-2).strftime("%d/%m/%Y")
     try:
         old_data = get(f"{BackendAPI}get_history?password={PASSWORD}&date={old_date}").json()
         u = sum(list(nd['UpsertsToday'].values())) - sum(list(old_data['UpsertsToday'].values()))
