@@ -6,7 +6,7 @@ This API can be used to find usernames from their IDs., get a random user, etc.
 
 **Note: This API is slow at indexing and not all the users on Scratch have been indexed yet. This is due to limitations of the [official Scratch API](https://api.scratch.mit.edu/) which allows a maximum of 10 requests per 1 second and the limitations of the hosting provider**
 
-**Currently, SUI has indexed over 3.0M+ (3.0 Million) users!**
+**Currently, SUI has indexed over 6.0M+ (6.0 Million) users!**
 
 ![https://sui.scratchconnect.eu.org/status/](https://img.shields.io/badge/dynamic/json?color=blue&label=Total%20Users%20Indexed&query=%24.TotalUsersData.Count&url=https%3A%2F%2Fsui.scratchconnect.eu.org%2Fstatus%2F)
 
