@@ -423,6 +423,7 @@ class ForumIndexer(Indexer):
                             print("FORUM INDEXER:", E)
                             break
                 page += 1  # Increase the category page index by 1
+            cp += 1
 
     def start_main_loop(self):
         while self.run:
