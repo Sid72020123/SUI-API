@@ -14,7 +14,6 @@ from deta import Deta
 from quickchart import QuickChart
 
 deta = Deta()
-api = API()
 
 status_db = deta.Base("status")
 history_db = deta.Base("history")
@@ -22,6 +21,7 @@ PASSWORD = os.environ["PASSWORD"]
 TELEGRAM_CHAT_ID = os.environ["CHAT_ID"]
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 TIMEZONE = timezone("Asia/Kolkata")
+api = API(PASSWORD)
 
 # ----- The API -----
 tags_metadata = [
@@ -45,7 +45,7 @@ app = FastAPI(
     title="SUI - Scratch Username Index API",
     description="Scratch Username Index API which indexes the users (only the username and the id) on the Scratch website and stores them in a database! "
     "You can find the username from their id using this API!\n\n This API was made because the Scratch API didn't had any endpoint to get username from their id.\n\n\n"
-    "**Note: You may not be able to find all the usernames from their IDs because this API hasn't indexed much users on Scratch! But it has indexed over 3M+ users!**",
+    "**Note: You may not be able to find all the usernames from their IDs because this API hasn't indexed much users on Scratch! But it has indexed over 6M+ users!**",
     version="4.0",
     openapi_tags=tags_metadata,
 )
