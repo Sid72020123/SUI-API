@@ -2,9 +2,10 @@ import time
 import arrow
 import json
 from requests import get, post
-import matplotlib.pyplot as plt
+from quickchart import QuickChart
 
-from Config import TIMEZONE, TelegramAPI, PASSWORD, STATUS_UPDATE_TIME, TELEGRAM_CHAT_ID, BackendAPI, STATUS_RESET_TIME
+from Config import TIMEZONE, TelegramAPI, PASSWORD, STATUS_UPDATE_TIME, TELEGRAM_CHAT_ID, BackendAPI, \
+    STATUS_RESET_TIME
 from DataBase import DataBase
 
 db = DataBase()
@@ -81,6 +82,7 @@ def set_status_thread():
 def create_status_history(date, data):
     return get(f"{BackendAPI}set_history?password={PASSWORD}&date={date}&data={json.dumps(data)}")
 
+
 def calculate_growth(ndate, nd):
     new_date = ndate
     old_date = new_date.shift(days=-2).strftime("%d/%m/%Y")
@@ -115,13 +117,14 @@ def updates_thread():
                 d = arrow.get(total_data['UpdateTimestamp'], tzinfo=TIMEZONE)
                 s = ""
                 for i in range(0, len(INDEXER_NAMES)):
-                    s += f"<b>{INDEXER_NAMES[i]}:</b> <pre>{list(data['UpsertsToday'].values())[i]:,}</pre>\n"
-                message = f"""Hourly <b>({current_time.strftime('%d/%m/%Y %H:%M')})</b> status update for <b>SUI API</b>:\n\n<b>Total Users Count:</b> <pre>{total_data['Count']:,}</pre> (last updated {d.humanize()})\n<b>Total Upserts Count:</b> <pre>{sum(list(data['UpsertsToday'].values())):,}</pre>\n\n<b>Upserts Today:</b>\n{s}"""
+                    s += f"<b>{INDEXER_NAMES[i]}:</b> {list(data['UpsertsToday'].values())[i]:,}\n"
+                message = f"""Hourly <b>({current_time.strftime('%d/%m/%Y %H:%M')})</b> status update for <b>SUI API</b>:\n\n<b>Total Users Count:</b> {total_data['Count']:,} (last updated {d.humanize()})\n<b>Total Upserts Count:</b> {sum(list(data['UpsertsToday'].values())):,}\n\n<b>Upserts Today:</b>\n{s}"""
                 send_telegram_message(message)
             except Exception as E:
                 print("UPDATES THREAD 1:", E)
                 message = f"""<b>An error occurred while sending hourly update:</b> <pre>{E}</pre>"""
                 send_telegram_message(message)
+            time.sleep(3)
         if f"{current_hour}:{current_minute}:{current_second}" == STATUS_RESET_TIME + ":00":
             try:
                 db.connect_server()
@@ -134,7 +137,7 @@ def updates_thread():
                 if growth[0] == False:
                     message = f"""<b>An error occurred while calculating the daily growth!</b>\n\nMaybe the data was insufficient..."""
                     send_telegram_message(message)
-                message = f"""Daily status update for <b>SUI API</b> Indexers on <b>{current_time.shift(days=-1).strftime('%d/%m/%Y')}</b>:\n\n<b>Total Users Count:</b> <pre>{total_data['Count']:,}</pre> (last updated {d.humanize()})\n<b>Total Upserts Count:</b> <pre>{sum(list(data['UpsertsToday'].values())):,}</pre>\n\n<b>Upserts Growth:</b> <pre>{growth[1]}</pre>\n<b>Users Count Growth:</b> <pre>{growth[2]}</pre>"""
+                message = f"""Daily status update for <b>SUI API</b> Indexers on <b>{current_time.shift(days=-1).strftime('%d/%m/%Y')}</b>:\n\n<b>Total Users Count:</b> {total_data['Count']:,} (last updated {d.humanize()})\n<b>Total Upserts Count:</b> {sum(list(data['UpsertsToday'].values())):,}\n\n<b>Upserts Growth:</b> {growth[1]}\n<b>Users Count Growth:</b> {growth[2]}"""
                 send_telegram_message(message)
                 if c[0]:
                     send_telegram_photo("charts/bar.png")
@@ -152,29 +155,88 @@ def updates_thread():
                 send_telegram_message(message)
         time.sleep(1)
 
+
 def create_daily_chart(d, date):
     data = d["UpsertsToday"]
     keys = INDEXER_NAMES
     values = list(data.values())
 
+    qc = QuickChart()
+    qc.version = '4.4.0'
+    qc.width = 700
+    qc.height = 500
+    qc.background_color = "rgb(0, 0, 0)"
+
     # Make Bar Chart
     try:
-        plt.bar(keys, values, width=0.5)
-        plt.xlabel("Indexers")
-        plt.ylabel("No. of upserts")
-        plt.title(f"SUI API: {date} - No. of upserts done by the indexers")
-        plt.savefig("charts/bar.png", bbox_inches="tight")
-        plt.close()
+        qc.config = {
+            "type": "bar",
+            "data": {
+                "labels": keys,
+                "datasets": [{
+                    "label": "Upserts Count",
+                    "data": values,
+                    "backgroundColor": ["#ff6b6b", "#f06595", "#cc5de8", "#845ef7", "#20c997", "#94d82d"],
+                }]
+            },
+            "options": {
+                "plugins": {
+                    "title": {
+                        "display": True,
+                        "text": f"SUI API ({date}) - Upserts Count of the Indexers",
+                        "color": "#FFFFFF",
+                        "font": {"weight": "bold"},
+                    },
+                    "legend": {
+                        "display": True,
+                        "labels": {
+                            "color": "#FFFFFF"
+                        }
+                    },
+                },
+                "scales": {
+                    "x": {
+                        "title": {"display": True, "text": "Indexer Type", "color": "#ffd43b"},
+                        "ticks": {"color": "#FFFFFF"}
+                    },
+                    "y": {
+                        "title": {"display": True, "text": "No. of upserts", "color": "#ffd43b"},
+                        "ticks": {"color": "#FFFFFF"}
+                    }
+                },
+            },
+        }
+        qc.to_file("charts/bar.png")
         bar_success = True
     except:
         bar_success = False
 
     # Make Pie Chart
     try:
-        plt.pie(values, labels=keys)
-        plt.savefig("charts/pie.png", bbox_inches="tight")
-        plt.close()
+        qc.config = {
+            "type": "pie",
+            "data": {
+                "labels": keys,
+                "datasets": [{
+                    "label": "Upserts Count",
+                    "data": values,
+                    "backgroundColor": ["#ff6b6b", "#f06595", "#cc5de8", "#845ef7", "#20c997", "#94d82d"],
+                }]
+            },
+            "options": {
+                "plugins": {
+                    "title": {
+                        "display": True,
+                        "text": f"SUI API ({date}) - Upserts Count of the Indexers",
+                        "color": "#FFFFFF",
+                        "font": {"weight": "bold"},
+                    },
+                },
+            },
+        }
+        qc.to_file("charts/pie.png")
         pie_success = True
     except:
         pie_success = False
     return [bar_success, pie_success]
+

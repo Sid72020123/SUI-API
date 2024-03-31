@@ -35,11 +35,10 @@ class Indexer:
         self.db_object = DataBase()
         is_connected = self.db_object.connect_server()
         if not is_connected[0]:
-            self.log_error(f"Couldn't connect the external MongoDB server: {is_connected[1]}")
+            self.log_error(f"Couldn't connect the external server: {is_connected[1]}")
             exit()
-        self.log_success("Successfully connected the external MongoDB server!")
+        self.log_success("Successfully connected the external server!")
         self.db = self.db_object
-        self.collection = self.db.collection
 
         self.URL = PROXIES[0]
         self.use_proxy = 0
@@ -59,21 +58,25 @@ class Indexer:
 
     def _update_upserts_count(self, c):
         old = None
-        with open(f"upserts_count/{self.indexer_type.lower()}_upserts.txt", "r") as file:
-            try:
-                old = int(file.read())
-            except Exception as E:
-                self.log_error(E)
-                old = 0
-        with open(f"upserts_count/{self.indexer_type.lower()}_upserts.txt", "w+") as file:
-            new = old + c
-            file.write(str(new))
+        tries = 0
+        while tries < 2:
+            with open(f"upserts_count/{self.indexer_type.lower()}_upserts.txt", "r") as file:
+                try:
+                    old = int(file.read())
+                except Exception as E:
+                    print(E)
+                    old = 0
+                    tries += 1
+                    continue
+            with open(f"upserts_count/{self.indexer_type.lower()}_upserts.txt", "w+") as file:
+                new = old + c
+                file.write(str(new))
+            break
 
     def add_data(self, d):
         # ----- Add the data to the DB -----
         try:
             response = self.db.upsert_data(d)
-            print(self.indexer_type, d)
             self._update_upserts_count(len(d))
         except Exception as E:
             self.log_error(f"Error occurred during upsert: {E}")
@@ -308,7 +311,7 @@ class ProjectIndexer(Indexer):
                             fails = 0
                         except KeyError:
                             fails += 1
-                        if fails >= 1000 and project_id > SCRATCH_PROJECTS:
+                        if fails >= 1000 and project_id > int(SCRATCH_PROJECTS):
                             project_id -= 1000
                             fails = 0
                             self.log_message(
@@ -362,7 +365,10 @@ class ShortUsernamesIndexer(Indexer):
                     index = 0  # Index
                     self.log_message(f"Starting from index: {index}")
                 while index < len(all_short_usernames):
-                    self.add_data(self.get_main_user_id(all_short_usernames[index]))
+                    try:
+                        self.add_data(self.get_main_user_id(all_short_usernames[index]))
+                    except:
+                        pass
                     self.log_message(f"Indexed short username no. {index} out of {len(all_short_usernames)}")
                     index += 1
                     self.update_status(index)
@@ -401,7 +407,7 @@ class ForumIndexer(Indexer):
                     t_page = 1
                     while True:  # Loop through a single topic page to get the posts
                         try:
-                            page_content = get(f"https://scratch.mit.edu/{link}?page={t_page}").content
+                            page_content = get(f"https://scratch.mit.edu{link}?page={t_page}", headers=HEADERS).content
                             s = BeautifulSoup(page_content, "html.parser")
                             d = s.find_all(attrs={"class": "blockpost roweven firstpost"})
                             if len(d) == 0:
@@ -414,7 +420,7 @@ class ForumIndexer(Indexer):
                                 user = list(a.values())[0]
                                 u[id] = user
                             self.add_data(u)
-                            self.update_status(c=True, i=[category_idx, category_page, page])
+                            self.update_status(c=True, i=[category_idx, cp, page])
                             self.log_message(
                                 f"Finished the topic page: {t_page} of the topic index: {LINKS.index(link)} of the category index: {category_idx}")
                             time.sleep(WAIT_TIME + 2)  # Sleep to reduce the load on Scratch Servers
@@ -475,6 +481,13 @@ class CloudGameIndexer(Indexer):
             self.log_error(f"An error occurred while fetching the projects from the studio: {E}")
             return []
 
+    def _process_logs(self, d):
+        result = {}
+        for i in d:
+            ud = self.get_main_user_id(i["user"])
+            result[list(ud.keys())[0]] = list(ud.values())[0]
+        return result
+
     def start_main_loop(self):
         while self.run:
             try:
@@ -483,7 +496,8 @@ class CloudGameIndexer(Indexer):
                 for project in ALL_PROJECT_IDS:
                     data = self.session.get(
                         f"https://clouddata.scratch.mit.edu/logs?projectid={project}&limit=100&offset=0").json()
-                    # TODO: Work further when the API gets fixed
+                    processed_data = self._process_logs(data)
+                    self.add_data(processed_data)
                     self.update_status(i=project)
                     self.log_message(f"Project no. {ALL_PROJECT_IDS.index(project) + 1} done")
                     time.sleep(WAIT_TIME + 2)
@@ -493,8 +507,8 @@ class CloudGameIndexer(Indexer):
 
 
 def start_all_indexing_threads():
-    # Temporarily stopped the Cloud Indexer due to the error in the cloud logs of Scratch
-    threads = [UsernameIndexer(), StudioIndexer(), ProjectIndexer(), ShortUsernamesIndexer(), ForumIndexer()]
+    threads = [UsernameIndexer(), StudioIndexer(), ProjectIndexer(), ShortUsernamesIndexer(), ForumIndexer(),
+               CloudGameIndexer()]
     for thread in threads:
         thread.run = True
         fun = thread.start_main_loop

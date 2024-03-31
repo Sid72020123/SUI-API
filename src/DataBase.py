@@ -1,44 +1,82 @@
 import json
 import time
-import pymongo
+import pymysql.cursors
 
-from pymongo import UpdateOne
+from Config import DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 
-from Config import PASSWORD
 
 class DataBase:
     def __init__(self):
-        self.client = None
-        self.db = None
-        self.collection = None
+        self.connection = None
+        self.cursor = None
 
     def connect_server(self):
         try:
-            # f"mongodb://localhost:27017/"
-            self.client = pymongo.MongoClient(
-                f"mongodb+srv://SUI:{PASSWORD}@sui.3k3k5.mongodb.net/?retryWrites=true&w=majority")
-        except pymongo.errors.ConfigurationError as E:
+            config = {
+                "host": DB_HOST,
+                "port": int(DB_PORT),
+                "user": DB_USERNAME,
+                "password": DB_PASSWORD,
+                "database": DB_NAME,
+                "charset": "utf8mb4",
+                "cursorclass": pymysql.cursors.DictCursor
+            }
+            self.connection = pymysql.connect(**config)
+        except Exception as E:
             return [False, E]
-        self.db = self.client['SUI']
-        self.collection = self.db['data']
+        self.cursor = self.connection.cursor()
         return [True]
 
     def update_documents_count(self):
-        length = self.collection.count_documents({})
+        q = "SELECT COUNT(*) AS count FROM data;"
+        self.cursor.execute(q)
+        length = self.cursor.fetchone()["count"]
         with open('count.json', 'w') as file:
-            file.write(json.dumps({'Count': length, 'UpdateTimestamp': time.time()}))
+            file.write(json.dumps(
+                {'Count': length, 'UpdateTimestamp': time.time()}))
 
     def _process_data(self, data):
         processed = []
         for user_id in data:
-            processed.append(
-                UpdateOne({"_id": user_id}, {"$set": {"_id": user_id, "Username": data[user_id]}}, upsert=True))
+            processed.append([int(user_id), data[user_id]])
         return processed
 
     def upsert_data(self, data):
+        """
+        Why did I use "cursor.execute()" instead of "cursor.executemany()"?
+        The main reason is this:
+            1. https://github.com/PyMySQL/PyMySQL/issues/506
+            2. https://github.com/PyMySQL/PyMySQL/issues/898
+        And pymysql library is faster than some major MySQL in Python connection libraries...
+        """
         requests = self._process_data(data)
+        result = []
         if not len(requests) == 0:
-            result = self.collection.bulk_write(requests, ordered=False)
-            return result.bulk_api_result
+            for each_one in requests:
+                query = f"INSERT INTO `data` (id, username) VALUES ('{each_one[0]}', '{each_one[1]}') ON DUPLICATE KEY UPDATE `username`='{each_one[1]}';"
+                result.append(self.cursor.execute(query))
+                self.connection.commit()
+            return result
         else:
-            return {}
+            return []
+
+    def get_id(self, username):
+        query = f"SELECT * FROM `data` WHERE `username` LIKE '{username.strip()}';"
+        self.cursor.execute(query)
+        return self.cursor.fetchone()
+
+    def get_username(self, id):
+        query = f"SELECT * FROM `data` WHERE `id` = '{int(id)}';"
+        self.cursor.execute(query)
+        return self.cursor.fetchone()
+
+    def get_random(self):
+        query = "SELECT * FROM `data` ORDER BY RAND() LIMIT 1;"
+        self.cursor.execute(query)
+        return self.cursor.fetchone()
+
+    def get_data(self, limit=1000, offset=0):
+        query = f"SELECT * FROM `data` LIMIT {int(limit)} OFFSET {int(offset)};"
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+

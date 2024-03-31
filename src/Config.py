@@ -5,8 +5,13 @@ from json import load
 
 load_dotenv()
 
-WAIT_TIME = 1
+WAIT_TIME = 3
 PASSWORD = getenv("PASSWORD", "")
+DB_USERNAME = getenv("DATABASE_USERNAME", "")
+DB_PASSWORD = getenv("DATABASE_PASSWORD", "")
+DB_HOST = getenv("DATABASE_HOST", "")
+DB_PORT = getenv("DATABASE_PORT", "")
+DB_NAME = getenv("DATABASE_NAME", "")
 SCRATCH_PROJECTS = getenv("SCRATCH_PROJECTS", "")
 SCRATCH_STUDIOS = getenv("SCRATCH_STUDIOS", "")
 HEADERS = {'User-Agent': 'SUI API v4.0'}
