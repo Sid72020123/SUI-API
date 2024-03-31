@@ -1,0 +1,26 @@
+v: 0
+micros:
+  - name: main
+    src: main/
+    engine: python3.9
+    primary: true
+    public: true
+    run: uvicorn main:app
+    dev: uvicorn main:app
+    presets:
+      env:
+        - name: PASSWORD
+          description: The password
+          default: '123'
+        - name: CHAT_ID
+          description: Telegram Chat ID
+          default: '123'
+        - name: BOT_TOKEN
+          description: Telegram Bot Token
+          default: '123'
+    actions:
+      - id: 'Send_Message'
+        name: 'Send Telegram Message'
+        description: 'Sends a Telegram Message'
+        trigger: 'schedule'
+        default_interval: '37 13 * * 0'

@@ -1,0 +1,7 @@
+deta
+requests
+fastapi
+uvicorn
+pytz
+arrow
+quickchart.io
