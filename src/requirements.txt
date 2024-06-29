@@ -1,9 +1,10 @@
 python-dotenv
 requests
-pymongo[srv]
-dnspython
+pymysql
 pyEventLogger
 beautifulsoup4
 pytz
 arrow
-matplotlib
+quickchart.io
+fastapi
+uvicorn

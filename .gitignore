@@ -4,3 +4,4 @@ src/__pycache__
 src/logs
 src/charts
 src/scratch_db_cache.json
+src/stats.json
