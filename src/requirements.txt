@@ -8,3 +8,4 @@ arrow
 quickchart.io
 fastapi
 uvicorn
+psycopg[binary]

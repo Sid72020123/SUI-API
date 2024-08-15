@@ -1,3 +1,13 @@
+"""
+SUI API - DataBase
+--------------------
+
+This file contains the code for the database connection and other functions used by the indexing threads
+
+--------------------
+Author: @Sid72020123 on Github
+"""
+
 import json
 import time
 import pymysql.cursors
@@ -79,4 +89,3 @@ class DataBase:
         query = f"SELECT * FROM `data` LIMIT {int(limit)} OFFSET {int(offset)};"
         self.cursor.execute(query)
         return self.cursor.fetchall()
-

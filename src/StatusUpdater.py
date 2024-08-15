@@ -1,3 +1,13 @@
+"""
+SUI API - Status Updater
+--------------------
+
+This file contains the code to send daily status and statistics of all the indexing threads to the maintainer of this API
+
+--------------------
+Author: @Sid72020123 on Github
+"""
+
 import time
 import arrow
 import json
@@ -10,43 +20,51 @@ from DataBase import DataBase
 
 db = DataBase()
 
-INDEXER_NAMES = ["Username", "Studio", "Project", "Short Username", "Forum", "Cloud Game"]
+INDEXER_NAMES = ["Username", "Studio", "Project",
+                 "Short Username", "Forum", "Cloud Game", "User Comments", "Front Page"]
 
 
 def get_status():
     try:
         total_data = json.loads(open('count.json', 'r').read())
-        working_at = json.loads(open('status.json', 'r').read())
-        upserts_today_username = int(open('upserts_count/username_upserts.txt', 'r').read())
-        upserts_today_studio = int(open('upserts_count/studio_upserts.txt', 'r').read())
-        upserts_today_project = int(open('upserts_count/project_upserts.txt', 'r').read())
-        upserts_today_short_usernames = int(open('upserts_count/short_username_upserts.txt', 'r').read())
-        upserts_today_forum = int(open('upserts_count/forum_upserts.txt', 'r').read())
-        upserts_today_cloud = int(open('upserts_count/cloud_game_upserts.txt', 'r').read())
+        working_at = []
+        upserts_count = []
+        for indexer in INDEXER_NAMES:
+            with open(f"status/{str(indexer.replace(' ','_')).upper()}.json", "r") as file:
+                try:
+                    working_at.append(json.loads(file.read()))
+                except json.decoder.JSONDecodeError:
+                    working_at.append({})
+            with open(f"upserts_count/{str(indexer.replace(' ','_')).lower()}_upserts.txt", "r") as file:
+                try:
+                    upserts_count.append(int(file.read()))
+                except ValueError:
+                    upserts_count.append(None)
+        indexer_statuses = []
+        upserts_count_statuses = {}
+        i = 0
+        for indexer in INDEXER_NAMES:
+            indexer_statuses.append(
+                {indexer.replace(" ", ""): working_at[i]["Data"]})
+            upserts_count_statuses[f"{indexer.replace(' ', '')}Indexer"] = upserts_count[i]
+            i += 1
+        forums_extra = {}
+        try:
+            count = int(open("upserts_count/forum_db_upserts.txt", "r").read())
+            forums_extra["UpsertsCount"] = count
+        except Exception:
+            forums_extra = {}
         data = {
             "Error": False,
             "ServerStatus": "Online",
             "TotalUsersData": total_data,
-            "UpsertsToday": {"UsernameIndexer": upserts_today_username, "StudioIndexer": upserts_today_studio,
-                             "ProjectIndexer": upserts_today_project,
-                             "ShortUsernameIndexer": upserts_today_short_usernames, "ForumIndexer": upserts_today_forum,
-                             "CloudGameIndexer": upserts_today_cloud},
-            "Indexers": [{
-                "Username": working_at["Username"]
-            }, {
-                "Project": working_at["Project"]
-            }, {
-                "Studio": working_at["Studio"]
-            }, {
-                "ShortUsername": working_at["ShortUsername"]
-            }, {
-                "Forum": working_at["Forum"]
-            }, {
-                "CloudGame": working_at["CloudGame"]
-            }]
+            "UpsertsToday": upserts_count_statuses,
+            "Indexers": indexer_statuses,
+            "Extra": {"Forums": forums_extra}
         }
-    except:
-        data = {"Error": True, "Info": "An error occurred. Please try again later after 5-10 minutes"}
+    except Exception as E:
+        data = {"Error": True,
+                "Info": "An error occurred. Please try again later after 5-10 minutes", "ErrorMessage": E}
     return data
 
 
@@ -71,6 +89,9 @@ def send_telegram_photo(file_name):
 
 
 def set_status_thread():
+    """
+    Save the current status for some time in an external DB for the future...
+    """
     while True:
         try:
             get(f"{BackendAPI}set_status?password={PASSWORD}&data={json.dumps(get_status())}")
@@ -87,8 +108,10 @@ def calculate_growth(ndate, nd):
     new_date = ndate
     old_date = new_date.shift(days=-2).strftime("%d/%m/%Y")
     try:
-        old_data = get(f"{BackendAPI}get_history?password={PASSWORD}&date={old_date}").json()
-        u = sum(list(nd['UpsertsToday'].values())) - sum(list(old_data['UpsertsToday'].values()))
+        old_data = get(
+            f"{BackendAPI}get_history?password={PASSWORD}&date={old_date}").json()
+        u = sum(list(nd['UpsertsToday'].values())) - \
+            sum(list(old_data['UpsertsToday'].values()))
         ug = f"{u:,}"
         if u > 0:
             ug = "+" + ug
@@ -132,7 +155,8 @@ def updates_thread():
                 data = get_status()
                 total_data = data['TotalUsersData']
                 d = arrow.get(total_data['UpdateTimestamp'], tzinfo=TIMEZONE)
-                c = create_daily_chart(data, current_time.shift(days=-1).strftime('%d/%m/%Y'))
+                c = create_daily_chart(data, current_time.shift(
+                    days=-1).strftime('%d/%m/%Y'))
                 growth = calculate_growth(current_time, data)
                 if growth[0] == False:
                     message = f"""<b>An error occurred while calculating the daily growth!</b>\n\nMaybe the data was insufficient..."""
@@ -143,8 +167,10 @@ def updates_thread():
                     send_telegram_photo("charts/bar.png")
                 if c[1]:
                     send_telegram_photo("charts/pie.png")
-                create_status_history(current_time.shift(days=-1).strftime('%d/%m/%Y'), get_status())
-                files = ["username", "studio", "project", "short_username", "forum", "cloud_game"]
+                create_status_history(current_time.shift(
+                    days=-1).strftime('%d/%m/%Y'), get_status())
+                files = [f.replace(" ", "_").lower() for f in INDEXER_NAMES]
+                files.append("forum_db")  # Extra for ForumsDB
                 for file in files:
                     with open(f"upserts_count/{file}_upserts.txt", "w") as f:
                         f.write("0")
@@ -239,4 +265,3 @@ def create_daily_chart(d, date):
     except:
         pie_success = False
     return [bar_success, pie_success]
-
